@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace bcc
 {
@@ -13,20 +15,28 @@ namespace bcc
                 if (string.IsNullOrWhiteSpace(line))
                     return;
 
-                var lexer = new Lexter(line);
-                while (true)
-                {
-                    var token = lexer.NextToken();
-                    if (token.Kind == SyntaxKind.EndOfFileToken)
-                        break;
-                    
-                    Console.WriteLine($"{token.Kind}: {token.Text} {token.Value}");
-                }
-                
-                if (line == "1 + 2 * 3")
-                    Console.WriteLine("7");
-                else
-                    Console.WriteLine("ERROR: Invalid expression!");
+                var parser = new Parser(line);
+                var expression = parser.Parse();
+                PrettyPrint(expression);
+            }
+        }
+
+        static void PrettyPrint(SyntaxNote note, string indent = "")
+        {
+            Console.Write(indent);
+            Console.Write(note.Kind);
+
+            if (note is SyntaxToken token && token.Value != null)
+            {
+                Console.Write($" {token.Value}");
+            }
+
+            Console.WriteLine();
+            
+            indent += "    ";
+            foreach (var child in note.GetChildren())
+            {
+                PrettyPrint(child, indent);
             }
         }
     }
@@ -42,15 +52,17 @@ namespace bcc
         OpenParenthesisToken,
         CloseParenthesisToken,
         BadToken,
-        EndOfFileToken
+        EndOfFileToken,
+        NumberExpression,
+        BinaryExpression
     }
 
-    class SyntaxToken
+    class SyntaxToken : SyntaxNote
     {
-        public SyntaxKind Kind { get; }
         public int Position { get; }
         public string Text { get; }
         public object Value { get; }
+        public override SyntaxKind Kind { get; }
 
         public SyntaxToken(SyntaxKind kind, int position, string text, object value)
         {
@@ -58,6 +70,11 @@ namespace bcc
             Position = position;
             Text = text;
             Value = value;
+        }
+        
+        public override IEnumerable<SyntaxNote> GetChildren()
+        {
+            return Enumerable.Empty<SyntaxNote>();
         }
     }
 
@@ -121,5 +138,117 @@ namespace bcc
         }
 
         private void Next() => _position++;
+    }
+
+    abstract class SyntaxNote
+    {
+        public abstract SyntaxKind Kind { get; }
+        public abstract IEnumerable<SyntaxNote> GetChildren();
+    }
+
+    abstract class ExpressionSyntax : SyntaxNote
+    { }
+
+    sealed class NumberExpressionSyntax : ExpressionSyntax
+    {
+        public SyntaxToken NumberToken { get; }
+        public override SyntaxKind Kind => SyntaxKind.NumberExpression;
+
+        public NumberExpressionSyntax(SyntaxToken numberToken)
+        {
+            NumberToken = numberToken;
+        }
+        
+        public override IEnumerable<SyntaxNote> GetChildren()
+        {
+            yield return NumberToken;
+        }
+    }
+
+    sealed class BinaryExpressionSyntax : ExpressionSyntax
+    {
+        public ExpressionSyntax Left { get; }
+        public SyntaxToken OperatorToken { get; }
+        public ExpressionSyntax Right { get; }
+        public override SyntaxKind Kind => SyntaxKind.BinaryExpression;
+
+        public BinaryExpressionSyntax(ExpressionSyntax left, SyntaxToken operatorToken, ExpressionSyntax right)
+        {
+            Left = left;
+            OperatorToken = operatorToken;
+            Right = right;
+        }
+        
+        public override IEnumerable<SyntaxNote> GetChildren()
+        {
+            yield return Left;
+            yield return OperatorToken;
+            yield return Right;
+        }
+    }
+    
+    class Parser
+    {
+        private readonly SyntaxToken[] _tokens;
+        private int _position;
+        public Parser(string text)
+        {
+            var tokens = new List<SyntaxToken>();
+            
+            var lexer = new Lexter(text);
+            SyntaxToken token;
+            do
+            {
+                token = lexer.NextToken();
+                if (token.Kind != SyntaxKind.BadToken && token.Kind != SyntaxKind.WhiteSpaceToken)
+                    tokens.Add(token);
+
+            } while (token.Kind != SyntaxKind.EndOfFileToken);
+
+            _tokens = tokens.ToArray();
+        }
+
+        private SyntaxToken Current => Peek(0);
+
+        public ExpressionSyntax Parse()
+        {
+            var left = ParsePrimaryExpression();
+            while (Current.Kind == SyntaxKind.PlusToken || Current.Kind == SyntaxKind.MinusToken)
+            {
+                var operatorToken = NextToken();
+                var right = ParsePrimaryExpression();
+                left = new BinaryExpressionSyntax(left, operatorToken, right);
+            }
+
+            return left;
+        }
+
+        private ExpressionSyntax ParsePrimaryExpression()
+        {
+            var numberToken = Match(SyntaxKind.NumberToken);
+            return new NumberExpressionSyntax(numberToken);
+        }
+
+        private SyntaxToken Peek(int offset)
+        {
+            var index = _position + offset;
+            index = index >= _tokens.Length ? _tokens.Length - 1 : index;
+            return _tokens[index];
+        }
+
+        private SyntaxToken NextToken()
+        {
+            var current = Current;
+            _position++;
+            return current;
+        }
+
+        private SyntaxToken Match(SyntaxKind kind)
+        {
+            if (Current.Kind == kind)
+                return NextToken();
+
+            return new SyntaxToken(kind, Current.Position, null, null);
+        }
     }
 }
