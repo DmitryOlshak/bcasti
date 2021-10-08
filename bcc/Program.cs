@@ -271,8 +271,16 @@ namespace bcc
 
         private ExpressionSyntax ParseExpression()
         {
+            var operators = new []
+            {
+                SyntaxKind.PlusToken, 
+                SyntaxKind.MinusToken, 
+                SyntaxKind.StarToken, 
+                SyntaxKind.SlashToken
+            };
+            
             var left = ParsePrimaryExpression();
-            while (Current.Kind == SyntaxKind.PlusToken || Current.Kind == SyntaxKind.MinusToken)
+            while (operators.Contains(Current.Kind))
             {
                 var operatorToken = NextToken();
                 var right = ParsePrimaryExpression();
