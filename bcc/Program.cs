@@ -21,22 +21,37 @@ namespace bcc
             }
         }
 
-        static void PrettyPrint(SyntaxNote note, string indent = "")
+        static void PrettyPrint(SyntaxNote note, string indent = "", bool isLast = true)
         {
-            Console.Write(indent);
+            var nodeChar = isLast ? "└── " : "├── ";
+            
+            if (string.IsNullOrEmpty(indent))
+                Console.Write(nodeChar);
+            else
+                Console.Write(indent + nodeChar);
+            
             Console.Write(note.Kind);
 
-            if (note is SyntaxToken token && token.Value != null)
-            {
+            if (note is SyntaxToken { Value: { } } token)
                 Console.Write($" {token.Value}");
-            }
 
             Console.WriteLine();
             
-            indent += "    ";
-            foreach (var child in note.GetChildren())
+            indent += isLast ? "    " : "│   ";
+
+            using var enumerator = note.GetChildren().GetEnumerator();
+            enumerator.MoveNext();
+            var current = enumerator.Current;
+            while (true)
             {
-                PrettyPrint(child, indent);
+                var completed = !enumerator.MoveNext();
+                
+                if (current != null)
+                    PrettyPrint(current, indent, isLast: completed);
+
+                current = enumerator.Current;
+                
+                if (completed) break;
             }
         }
     }
