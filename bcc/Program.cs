@@ -264,17 +264,34 @@ namespace bcc
 
         public SyntaxTree Parse()
         {
-            var expression = ParseExpression();
+            var expression = ParseTerm();
             var endOfFileToken = Match(SyntaxKind.EndOfFileToken);
             return new SyntaxTree(_diagnostics, expression, endOfFileToken);
         }
 
-        private ExpressionSyntax ParseExpression()
+        private ExpressionSyntax ParseTerm()
         {
             var operators = new []
             {
                 SyntaxKind.PlusToken, 
                 SyntaxKind.MinusToken, 
+            };
+            
+            var left = ParseFactor();
+            while (operators.Contains(Current.Kind))
+            {
+                var operatorToken = NextToken();
+                var right = ParseFactor();
+                left = new BinaryExpressionSyntax(left, operatorToken, right);
+            }
+
+            return left;
+        }
+        
+        private ExpressionSyntax ParseFactor()
+        {
+            var operators = new []
+            {
                 SyntaxKind.StarToken, 
                 SyntaxKind.SlashToken
             };
