@@ -17,19 +17,24 @@ namespace bcc
 
                 var parser = new Parser(line);
                 var syntaxTree = parser.Parse();
-
                 var color = Console.ForegroundColor;
                 
                 Console.ForegroundColor = ConsoleColor.DarkGray;
                 PrettyPrint(syntaxTree.Root);
-
-                Console.ForegroundColor = ConsoleColor.DarkRed;
-                foreach (var diagnostic in syntaxTree.Diagnostics)
-                {
-                    Console.WriteLine(diagnostic);
-                }
-                
                 Console.ForegroundColor = color;
+                
+                if (!syntaxTree.Diagnostics.Any())
+                {
+                    var evaluator = new Evaluator(syntaxTree.Root);
+                    Console.WriteLine(evaluator.Evaluate());
+                }
+                else
+                {
+                    Console.ForegroundColor = ConsoleColor.DarkRed;
+                    foreach (var diagnostic in syntaxTree.Diagnostics)
+                        Console.WriteLine(diagnostic);
+                    Console.ForegroundColor = color;
+                }
             }
         }
 
@@ -128,7 +133,10 @@ namespace bcc
                     Next();
                 var length = _position - start;
                 var text = _text.Substring(start, length);
-                int.TryParse(text, out var value);
+                if (!int.TryParse(text, out var value))
+                {
+                    _diagnostics.Add($"ERROR: the number {text} isn't valid Int");
+                }
                 return new SyntaxToken(SyntaxKind.NumberToken, start, text, value);
             }
 
@@ -301,6 +309,48 @@ namespace bcc
 
             _diagnostics.Add($"ERROR: unexpected token <{Current.Kind}>, expected <{kind}>");
             return new SyntaxToken(kind, Current.Position, null, null);
+        }
+    }
+
+    class Evaluator
+    {
+        private readonly ExpressionSyntax _root;
+
+        public Evaluator(ExpressionSyntax root)
+        {
+            _root = root;
+        }
+
+        public int Evaluate()
+        {
+            return EvaluateExpression(_root);
+        }
+
+        private int EvaluateExpression(ExpressionSyntax node)
+        {
+            if (node is NumberExpressionSyntax number)
+                return (int)number.NumberToken.Value;
+
+            if (node is BinaryExpressionSyntax binary)
+            {
+                var left = EvaluateExpression(binary.Left);
+                var right = EvaluateExpression(binary.Right);
+                switch (binary.OperatorToken.Kind)
+                {
+                    case SyntaxKind.PlusToken:
+                        return left + right;
+                    case SyntaxKind.MinusToken:
+                        return left - right;
+                    case SyntaxKind.StarToken:
+                        return left * right;
+                    case SyntaxKind.SlashToken:
+                        return left / right;
+                    default:
+                        throw new Exception($"Unexpected binary operator {binary.OperatorToken.Kind}");
+                }
+            }
+
+            throw new Exception($"Unexpected node kind {node.Kind}");
         }
     }
 }
