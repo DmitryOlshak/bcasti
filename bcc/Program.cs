@@ -17,7 +17,19 @@ namespace bcc
 
                 var parser = new Parser(line);
                 var expression = parser.Parse();
+
+                var color = Console.ForegroundColor;
+                
+                Console.ForegroundColor = ConsoleColor.DarkGray;
                 PrettyPrint(expression);
+
+                Console.ForegroundColor = ConsoleColor.DarkRed;
+                foreach (var diagnostic in parser.Diagnostics)
+                {
+                    Console.WriteLine(diagnostic);
+                }
+                
+                Console.ForegroundColor = color;
             }
         }
 
@@ -93,11 +105,14 @@ namespace bcc
     {
         private readonly string _text;
         private int _position;
-        
+        private readonly List<string> _diagnostics = new List<string>();
+
         public Lexter(string text)
         {
             _text = text;
         }
+
+        public IEnumerable<string> Diagnostics => _diagnostics;
 
         private char Current => _position >= _text.Length ? '\0' : _text[_position];
 
@@ -145,6 +160,7 @@ namespace bcc
             if (Current == ')') 
                 return new SyntaxToken(SyntaxKind.CloseParenthesisToken, _position++, ")", null);
 
+            _diagnostics.Add($"ERROR: bad character input: {Current}");
             return new SyntaxToken(SyntaxKind.BadToken, _position++, _text.Substring(_position - 1, 1), null);
         }
 
@@ -201,6 +217,7 @@ namespace bcc
     class Parser
     {
         private readonly SyntaxToken[] _tokens;
+        private readonly List<string> _diagnostics = new List<string>();
         private int _position;
         public Parser(string text)
         {
@@ -217,8 +234,10 @@ namespace bcc
             } while (token.Kind != SyntaxKind.EndOfFileToken);
 
             _tokens = tokens.ToArray();
+            _diagnostics.AddRange(lexer.Diagnostics);
         }
 
+        public IEnumerable<string> Diagnostics => _diagnostics;
         private SyntaxToken Current => Peek(0);
 
         public ExpressionSyntax Parse()
@@ -259,6 +278,7 @@ namespace bcc
             if (Current.Kind == kind)
                 return NextToken();
 
+            _diagnostics.Add($"ERROR: unexpected token <{Current.Kind}>, expected <{kind}>");
             return new SyntaxToken(kind, Current.Position, null, null);
         }
     }
