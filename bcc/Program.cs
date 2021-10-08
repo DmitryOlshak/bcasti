@@ -21,7 +21,7 @@ namespace bcc
             }
         }
 
-        static void PrettyPrint(SyntaxNote note, string indent = "", bool isLast = true)
+        static void PrettyPrint(SyntaxNode node, string indent = "", bool isLast = true)
         {
             var nodeChar = isLast ? "└── " : "├── ";
             
@@ -30,16 +30,16 @@ namespace bcc
             else
                 Console.Write(indent + nodeChar);
             
-            Console.Write(note.Kind);
+            Console.Write(node.Kind);
 
-            if (note is SyntaxToken { Value: { } } token)
+            if (node is SyntaxToken { Value: { } } token)
                 Console.Write($" {token.Value}");
 
             Console.WriteLine();
             
             indent += isLast ? "    " : "│   ";
 
-            using var enumerator = note.GetChildren().GetEnumerator();
+            using var enumerator = node.GetChildren().GetEnumerator();
             enumerator.MoveNext();
             var current = enumerator.Current;
             while (true)
@@ -72,7 +72,7 @@ namespace bcc
         BinaryExpression
     }
 
-    class SyntaxToken : SyntaxNote
+    class SyntaxToken : SyntaxNode
     {
         public int Position { get; }
         public string Text { get; }
@@ -87,9 +87,9 @@ namespace bcc
             Value = value;
         }
         
-        public override IEnumerable<SyntaxNote> GetChildren()
+        public override IEnumerable<SyntaxNode> GetChildren()
         {
-            return Enumerable.Empty<SyntaxNote>();
+            return Enumerable.Empty<SyntaxNode>();
         }
     }
 
@@ -155,13 +155,13 @@ namespace bcc
         private void Next() => _position++;
     }
 
-    abstract class SyntaxNote
+    abstract class SyntaxNode
     {
         public abstract SyntaxKind Kind { get; }
-        public abstract IEnumerable<SyntaxNote> GetChildren();
+        public abstract IEnumerable<SyntaxNode> GetChildren();
     }
 
-    abstract class ExpressionSyntax : SyntaxNote
+    abstract class ExpressionSyntax : SyntaxNode
     { }
 
     sealed class NumberExpressionSyntax : ExpressionSyntax
@@ -174,7 +174,7 @@ namespace bcc
             NumberToken = numberToken;
         }
         
-        public override IEnumerable<SyntaxNote> GetChildren()
+        public override IEnumerable<SyntaxNode> GetChildren()
         {
             yield return NumberToken;
         }
@@ -194,7 +194,7 @@ namespace bcc
             Right = right;
         }
         
-        public override IEnumerable<SyntaxNote> GetChildren()
+        public override IEnumerable<SyntaxNode> GetChildren()
         {
             yield return Left;
             yield return OperatorToken;
