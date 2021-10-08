@@ -24,12 +24,8 @@ namespace bcc
         static void PrettyPrint(SyntaxNode node, string indent = "", bool isLast = true)
         {
             var nodeChar = isLast ? "└── " : "├── ";
-            
-            if (string.IsNullOrEmpty(indent))
-                Console.Write(nodeChar);
-            else
-                Console.Write(indent + nodeChar);
-            
+
+            Console.Write(indent + nodeChar);
             Console.Write(node.Kind);
 
             if (node is SyntaxToken { Value: { } } token)
