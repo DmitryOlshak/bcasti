@@ -82,7 +82,8 @@ namespace bcc
         BadToken,
         EndOfFileToken,
         NumberExpression,
-        BinaryExpression
+        BinaryExpression,
+        ParenthesizedExpression
     }
 
     class SyntaxToken : SyntaxNode
@@ -222,6 +223,31 @@ namespace bcc
         }
     }
 
+    sealed class ParenthesizedExpressionSyntax : ExpressionSyntax
+    {
+        public SyntaxToken OpenParenthesisToken { get; }
+        public ExpressionSyntax Expression { get; }
+        public SyntaxToken CloseParenthesisToken { get; }
+        public override SyntaxKind Kind => SyntaxKind.ParenthesizedExpression;
+
+        public ParenthesizedExpressionSyntax(
+            SyntaxToken openParenthesisToken, 
+            ExpressionSyntax expression, 
+            SyntaxToken closeParenthesisToken)
+        {
+            OpenParenthesisToken = openParenthesisToken;
+            Expression = expression;
+            CloseParenthesisToken = closeParenthesisToken;
+        }
+        
+        public override IEnumerable<SyntaxNode> GetChildren()
+        {
+            yield return OpenParenthesisToken;
+            yield return Expression;
+            yield return CloseParenthesisToken;
+        }
+    }
+
     sealed class SyntaxTree
     {
         public IReadOnlyList<string> Diagnostics { get; }
@@ -306,9 +332,17 @@ namespace bcc
 
             return left;
         }
-
+        
         private ExpressionSyntax ParsePrimaryExpression()
         {
+            if (Current.Kind == SyntaxKind.OpenParenthesisToken)
+            {
+                var openToken = NextToken();
+                var expression = ParseTerm();
+                var closeToken = Match(SyntaxKind.CloseParenthesisToken);
+                return new ParenthesizedExpressionSyntax(openToken, expression, closeToken);
+            }
+            
             var numberToken = Match(SyntaxKind.NumberToken);
             return new NumberExpressionSyntax(numberToken);
         }
@@ -355,6 +389,9 @@ namespace bcc
         {
             if (node is NumberExpressionSyntax number)
                 return (int)number.NumberToken.Value;
+
+            if (node is ParenthesizedExpressionSyntax parentheses)
+                return EvaluateExpression(parentheses.Expression);
 
             if (node is BinaryExpressionSyntax binary)
             {
