@@ -2,7 +2,7 @@
 
 namespace Bcasti.CodeAnalysis
 {
-    class Lexter
+    internal sealed class Lexter
     {
         private readonly string _text;
         private int _position;

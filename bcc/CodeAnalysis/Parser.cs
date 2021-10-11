@@ -3,7 +3,7 @@ using System.Linq;
 
 namespace Bcasti.CodeAnalysis
 {
-    class Parser
+    internal sealed class Parser
     {
         private readonly SyntaxToken[] _tokens;
         private readonly List<string> _diagnostics = new List<string>();

@@ -2,7 +2,7 @@
 
 namespace Bcasti.CodeAnalysis
 {
-    sealed class NumberExpressionSyntax : ExpressionSyntax
+    public sealed class NumberExpressionSyntax : ExpressionSyntax
     {
         public SyntaxToken NumberToken { get; }
         public override SyntaxKind Kind => SyntaxKind.NumberExpression;

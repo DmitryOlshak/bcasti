@@ -4,9 +4,9 @@ using Bcasti.CodeAnalysis;
 
 namespace Bcasti
 {
-    class Program
+    internal static class Program
     {
-        static void Main(string[] args)
+        private static void Main()
         {
             var showTree = false;
             while (true)
@@ -27,10 +27,9 @@ namespace Bcasti
 
                 if (showTree)
                 {
-                    var color = Console.ForegroundColor;
                     Console.ForegroundColor = ConsoleColor.DarkGray;
                     PrettyPrint(syntaxTree.Root);
-                    Console.ForegroundColor = color;
+                    Console.ResetColor();
                 }
                 
                 if (!syntaxTree.Diagnostics.Any())
@@ -40,11 +39,10 @@ namespace Bcasti
                 }
                 else
                 {
-                    var color = Console.ForegroundColor;
                     Console.ForegroundColor = ConsoleColor.DarkRed;
                     foreach (var diagnostic in syntaxTree.Diagnostics)
                         Console.WriteLine(diagnostic);
-                    Console.ForegroundColor = color;
+                    Console.ResetColor();
                 }
             }
         }
