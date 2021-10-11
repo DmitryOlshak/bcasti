@@ -85,7 +85,7 @@ namespace Bcasti.CodeAnalysis
             }
             
             var numberToken = Match(SyntaxKind.NumberToken);
-            return new NumberExpressionSyntax(numberToken);
+            return new LiteralExpressionSyntax(numberToken);
         }
 
         private SyntaxToken Peek(int offset)
