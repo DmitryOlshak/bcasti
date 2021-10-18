@@ -31,47 +31,42 @@ namespace Bcasti.CodeAnalysis
 
         public SyntaxTree Parse()
         {
-            var expression = ParseTerm();
+            var expression = ParseExpression();
             var endOfFileToken = Match(SyntaxKind.EndOfFileToken);
             return new SyntaxTree(_diagnostics, expression, endOfFileToken);
         }
 
-        private ExpressionSyntax ParseTerm()
+        private ExpressionSyntax ParseExpression(int parentPrecedence = 0)
         {
-            var operators = new []
+            var left = ParsePrimaryExpression();
+
+            while (true)
             {
-                SyntaxKind.PlusToken, 
-                SyntaxKind.MinusToken, 
-            };
-            
-            var left = ParseFactor();
-            while (operators.Contains(Current.Kind))
-            {
+                var precedence = GetBinaryOperatorPrecedence(Current.Kind);
+                if (precedence == 0 || precedence <= parentPrecedence)
+                    break;
+
                 var operatorToken = NextToken();
-                var right = ParseFactor();
+                var right = ParseExpression(precedence);
                 left = new BinaryExpressionSyntax(left, operatorToken, right);
             }
 
             return left;
         }
-        
-        private ExpressionSyntax ParseFactor()
-        {
-            var operators = new []
-            {
-                SyntaxKind.StarToken, 
-                SyntaxKind.SlashToken
-            };
-            
-            var left = ParsePrimaryExpression();
-            while (operators.Contains(Current.Kind))
-            {
-                var operatorToken = NextToken();
-                var right = ParsePrimaryExpression();
-                left = new BinaryExpressionSyntax(left, operatorToken, right);
-            }
 
-            return left;
+        private static int GetBinaryOperatorPrecedence(SyntaxKind kind)
+        {
+            switch (kind)
+            {
+                case SyntaxKind.StarToken:
+                case SyntaxKind.SlashToken:
+                    return 2;
+                case SyntaxKind.PlusToken:
+                case SyntaxKind.MinusToken:
+                    return 1;
+                default:
+                    return 0;
+            }
         }
         
         private ExpressionSyntax ParsePrimaryExpression()
@@ -79,7 +74,7 @@ namespace Bcasti.CodeAnalysis
             if (Current.Kind == SyntaxKind.OpenParenthesisToken)
             {
                 var openToken = NextToken();
-                var expression = ParseTerm();
+                var expression = ParseExpression();
                 var closeToken = Match(SyntaxKind.CloseParenthesisToken);
                 return new ParenthesizedExpressionSyntax(openToken, expression, closeToken);
             }
