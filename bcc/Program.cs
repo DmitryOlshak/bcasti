@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using Bcasti.CodeAnalysis;
+using Bcasti.CodeAnalysis.Syntax;
 
 namespace Bcasti
 {

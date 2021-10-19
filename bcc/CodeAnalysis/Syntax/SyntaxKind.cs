@@ -1,4 +1,4 @@
-﻿namespace Bcasti.CodeAnalysis
+﻿namespace Bcasti.CodeAnalysis.Syntax
 {
     public enum SyntaxKind
     {

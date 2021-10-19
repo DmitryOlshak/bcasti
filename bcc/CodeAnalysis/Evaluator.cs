@@ -1,4 +1,5 @@
 ﻿using System;
+using Bcasti.CodeAnalysis.Syntax;
 
 namespace Bcasti.CodeAnalysis
 {
