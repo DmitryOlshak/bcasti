@@ -24,6 +24,19 @@ namespace Bcasti.CodeAnalysis
             if (node is ParenthesizedExpressionSyntax parentheses)
                 return EvaluateExpression(parentheses.Expression);
 
+            if (node is UnaryExpressionSyntax unary)
+            {
+                var operand = EvaluateExpression(unary.Operand);
+                
+                if (unary.OperatorToken.Kind == SyntaxKind.MinusToken)
+                    return -operand;
+                
+                if (unary.OperatorToken.Kind == SyntaxKind.PlusToken)
+                    return operand;
+                
+                throw new Exception($"Unexpected unary operator {unary.OperatorToken.Kind}");
+            }
+
             if (node is BinaryExpressionSyntax binary)
             {
                 var left = EvaluateExpression(binary.Left);
