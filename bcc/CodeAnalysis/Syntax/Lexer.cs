@@ -2,13 +2,13 @@
 
 namespace Bcasti.CodeAnalysis.Syntax
 {
-    internal sealed class Lexter
+    internal sealed class Lexer
     {
         private readonly string _text;
         private int _position;
         private readonly List<string> _diagnostics = new List<string>();
 
-        public Lexter(string text)
+        public Lexer(string text)
         {
             _text = text;
         }
@@ -44,6 +44,17 @@ namespace Bcasti.CodeAnalysis.Syntax
                 var length = _position - start;
                 var text = _text.Substring(start, length);
                 return new SyntaxToken(SyntaxKind.WhiteSpaceToken, start, text, null);
+            }
+
+            if (char.IsLetter(Current))
+            {
+                var start = _position;
+                while (char.IsLetter(Current))
+                    Next();
+                var length = _position - start;
+                var text = _text.Substring(start, length);
+                var syntaxKind = SyntaxFacts.GetKeywordKind(text);
+                return new SyntaxToken(syntaxKind, start, text, null);
             }
 
             if (Current == '+')

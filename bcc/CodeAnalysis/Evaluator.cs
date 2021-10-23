@@ -12,19 +12,19 @@ namespace Bcasti.CodeAnalysis
             _root = root;
         }
 
-        public int Evaluate()
+        public object Evaluate()
         {
             return EvaluateExpression(_root);
         }
 
-        private int EvaluateExpression(BoundExpression node)
+        private object EvaluateExpression(BoundExpression node)
         {
-            if (node is BoundLiteralExpression number)
-                return (int)number.Value;
+            if (node is BoundLiteralExpression literal)
+                return literal.Value;
 
             if (node is BoundUnaryExpression unary)
             {
-                var operand = EvaluateExpression(unary.Operand);
+                var operand = (int)EvaluateExpression(unary.Operand);
                 
                 if (unary.OperatorKind == BoundUnaryOperatorKind.Negation)
                     return -operand;
@@ -37,8 +37,8 @@ namespace Bcasti.CodeAnalysis
 
             if (node is BoundBinaryExpression binary)
             {
-                var left = EvaluateExpression(binary.Left);
-                var right = EvaluateExpression(binary.Right);
+                var left = (int)EvaluateExpression(binary.Left);
+                var right = (int)EvaluateExpression(binary.Right);
                 switch (binary.OperatorKind)
                 {
                     case BoundBinaryOperatorKind.Addition:

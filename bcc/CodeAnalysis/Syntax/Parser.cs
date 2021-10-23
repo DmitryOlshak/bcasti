@@ -11,7 +11,7 @@ namespace Bcasti.CodeAnalysis.Syntax
         {
             var tokens = new List<SyntaxToken>();
             
-            var lexer = new Lexter(text);
+            var lexer = new Lexer(text);
             SyntaxToken token;
             do
             {
@@ -38,7 +38,7 @@ namespace Bcasti.CodeAnalysis.Syntax
         private ExpressionSyntax ParseExpression(int parentPrecedence = 0)
         {
             ExpressionSyntax left;
-            var unaryOperatorPrecedence = Current.Kind.GetUnaryOperatorPrecedence();
+            var unaryOperatorPrecedence = SyntaxFacts.GetUnaryOperatorPrecedence(Current.Kind);
             if (unaryOperatorPrecedence != 0 && unaryOperatorPrecedence > parentPrecedence)
             {
                 var operatorToken = NextToken();
@@ -52,7 +52,7 @@ namespace Bcasti.CodeAnalysis.Syntax
 
             while (true)
             {
-                var precedence = Current.Kind.GetBinaryOperatorPrecedence();
+                var precedence = SyntaxFacts.GetBinaryOperatorPrecedence(Current.Kind);
                 if (precedence == 0 || precedence <= parentPrecedence)
                     break;
 
@@ -72,6 +72,13 @@ namespace Bcasti.CodeAnalysis.Syntax
                 var expression = ParseExpression();
                 var closeToken = Match(SyntaxKind.CloseParenthesisToken);
                 return new ParenthesizedExpressionSyntax(openToken, expression, closeToken);
+            }
+            
+            if (Current.Kind is SyntaxKind.TrueKeyword or SyntaxKind.FalseKeyword)
+            {
+                var booleanToken = NextToken();
+                var value = booleanToken.Kind == SyntaxKind.TrueKeyword;
+                return new LiteralExpressionSyntax(booleanToken, value);
             }
             
             var numberToken = Match(SyntaxKind.NumberToken);

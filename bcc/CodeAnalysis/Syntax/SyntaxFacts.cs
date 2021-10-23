@@ -1,8 +1,8 @@
 ﻿namespace Bcasti.CodeAnalysis.Syntax
 {
-    internal static class SyntaxKindExtension 
+    internal static class SyntaxFacts 
     {
-        public static int GetUnaryOperatorPrecedence(this SyntaxKind kind)
+        public static int GetUnaryOperatorPrecedence(SyntaxKind kind)
         {
             switch (kind)
             {
@@ -14,7 +14,7 @@
             }
         }
         
-        public static int GetBinaryOperatorPrecedence(this SyntaxKind kind)
+        public static int GetBinaryOperatorPrecedence(SyntaxKind kind)
         {
             switch (kind)
             {
@@ -27,6 +27,16 @@
                 default:
                     return 0;
             }
+        }
+
+        public static SyntaxKind GetKeywordKind(string keyword)
+        {
+            return keyword switch
+            {
+                "true" => SyntaxKind.TrueKeyword,
+                "false" => SyntaxKind.FalseKeyword,
+                _ => SyntaxKind.IdentifierToken,
+            };
         }
     }
 }
