@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using Bcasti.CodeAnalysis;
+using Bcasti.CodeAnalysis.Binding;
 using Bcasti.CodeAnalysis.Syntax;
 
 namespace Bcasti
@@ -25,6 +26,9 @@ namespace Bcasti
                 }
                 
                 var syntaxTree = SyntaxTree.Parse(line);
+                var binder = new Binder();
+                var boundExpression = binder.Bind(syntaxTree.Root);
+                var diagnostics = syntaxTree.Diagnostics.Concat(binder.Diagnostics).ToArray();
 
                 if (showTree)
                 {
@@ -33,9 +37,9 @@ namespace Bcasti
                     Console.ResetColor();
                 }
                 
-                if (!syntaxTree.Diagnostics.Any())
+                if (!diagnostics.Any())
                 {
-                    var evaluator = new Evaluator(syntaxTree.Root);
+                    var evaluator = new Evaluator(boundExpression);
                     Console.WriteLine(evaluator.Evaluate());
                 }
                 else
