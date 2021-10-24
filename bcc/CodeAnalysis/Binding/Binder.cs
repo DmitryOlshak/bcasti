@@ -34,80 +34,29 @@ namespace Bcasti.CodeAnalysis.Binding
         {
             var left = Bind(syntax.Left);
             var right = Bind(syntax.Right);
-            var operatorKind = BindBinaryOperatorKind(syntax.OperatorToken.Kind, left.Type, right.Type);
+            var op = BoundBinaryOperator.Bind(syntax.OperatorToken.Kind, left.Type, right.Type);
             
-            if (operatorKind == null)
+            if (op == null)
             {
                 _diagnostics.Add($"Binary operator '{syntax.OperatorToken.Text}' is not define for types {left.Type} and {right.Type}");
                 return left;
             }
-            
-            return new BoundBinaryExpression(left, operatorKind.Value, right);
+
+            return new BoundBinaryExpression(left, op, right);
         }
 
         private BoundExpression BindUnaryExpression(UnaryExpressionSyntax syntax)
         {
             var operand = Bind(syntax.Operand);
-            var operatorKind = BindUnaryOperatorKind(syntax.OperatorToken.Kind, operand.Type);
+            var op = BoundUnaryOperator.Bind(syntax.OperatorToken.Kind, operand.Type);
             
-            if (operatorKind == null)
+            if (op == null)
             {
                 _diagnostics.Add($"Unary operator '{syntax.OperatorToken.Text}' is not define for type {operand.Type}");
                 return operand;
             }
             
-            return new BoundUnaryExpression(operatorKind.Value, operand);
-        }
-
-        private static BoundBinaryOperatorKind? BindBinaryOperatorKind(SyntaxKind kind, Type leftType, Type rightType)
-        {
-            if (leftType == typeof(int) && rightType == typeof(int))
-            {
-                return kind switch
-                {
-                    SyntaxKind.PlusToken => BoundBinaryOperatorKind.Addition,
-                    SyntaxKind.MinusToken => BoundBinaryOperatorKind.Subtraction,
-                    SyntaxKind.StarToken => BoundBinaryOperatorKind.Multiplication,
-                    SyntaxKind.SlashToken => BoundBinaryOperatorKind.Division,
-                    _ => throw new Exception($"Unexpected binary operator {kind}"),
-                };
-            }
-            
-            if (leftType == typeof(bool) && rightType == typeof(bool))
-            {
-                return kind switch
-                {
-                    SyntaxKind.AmpersandAmpersandToken => BoundBinaryOperatorKind.LogicalAnd,
-                    SyntaxKind.PipePipeToken => BoundBinaryOperatorKind.LogicalOr,
-                    _ => throw new Exception($"Unexpected binary operator {kind}"),
-                };
-            }
-            
-            return null;
-        }
-        
-        private static BoundUnaryOperatorKind? BindUnaryOperatorKind(SyntaxKind kind, Type operandType)
-        {
-            if (operandType == typeof(int))
-            {
-                return kind switch
-                {
-                    SyntaxKind.PlusToken => BoundUnaryOperatorKind.Identity,
-                    SyntaxKind.MinusToken => BoundUnaryOperatorKind.Negation,
-                    _ => throw new Exception($"Unexpected unary operator {kind}"),
-                };
-            }
-
-            if (operandType == typeof(bool))
-            {
-                return kind switch
-                {
-                    SyntaxKind.BangToken => BoundUnaryOperatorKind.LogicalNegation,
-                    _ => throw new Exception($"Unexpected unary operator {kind}"),
-                };
-            }
-
-            return null;
+            return new BoundUnaryExpression(op, operand);
         }
     }
 }

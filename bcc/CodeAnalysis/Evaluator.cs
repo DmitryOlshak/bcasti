@@ -26,12 +26,12 @@ namespace Bcasti.CodeAnalysis
             {
                 var operand = EvaluateExpression(unary.Operand);
 
-                return unary.OperatorKind switch
+                return unary.Operator.Kind switch
                 {
                     BoundUnaryOperatorKind.Negation => -(int)operand,
                     BoundUnaryOperatorKind.Identity => operand,
                     BoundUnaryOperatorKind.LogicalNegation => !(bool)operand,
-                    _ => throw new Exception($"Unexpected unary operator {unary.OperatorKind}")
+                    _ => throw new Exception($"Unexpected unary operator {unary.Operator}")
                 };
             }
 
@@ -39,7 +39,7 @@ namespace Bcasti.CodeAnalysis
             {
                 var left = EvaluateExpression(binary.Left);
                 var right = EvaluateExpression(binary.Right);
-                switch (binary.OperatorKind)
+                switch (binary.Operator.Kind)
                 {
                     case BoundBinaryOperatorKind.Addition:
                         return (int)left + (int)right;
@@ -54,7 +54,7 @@ namespace Bcasti.CodeAnalysis
                     case BoundBinaryOperatorKind.LogicalOr:
                         return (bool)left || (bool)right;
                     default:
-                        throw new Exception($"Unexpected binary operator {binary.OperatorKind}");
+                        throw new Exception($"Unexpected binary operator {binary.Operator}");
                 }
             }
 
