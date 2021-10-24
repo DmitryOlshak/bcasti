@@ -18,6 +18,9 @@
         UnaryExpression,
         TrueKeyword,
         FalseKeyword,
-        IdentifierToken
+        IdentifierToken,
+        BangToken,
+        AmpersandAmpersandToken,
+        PipePipeToken
     }
 }

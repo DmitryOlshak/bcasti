@@ -24,31 +24,35 @@ namespace Bcasti.CodeAnalysis
 
             if (node is BoundUnaryExpression unary)
             {
-                var operand = (int)EvaluateExpression(unary.Operand);
-                
-                if (unary.OperatorKind == BoundUnaryOperatorKind.Negation)
-                    return -operand;
-                
-                if (unary.OperatorKind == BoundUnaryOperatorKind.Identity)
-                    return operand;
-                
-                throw new Exception($"Unexpected unary operator {unary.OperatorKind}");
+                var operand = EvaluateExpression(unary.Operand);
+
+                return unary.OperatorKind switch
+                {
+                    BoundUnaryOperatorKind.Negation => -(int)operand,
+                    BoundUnaryOperatorKind.Identity => operand,
+                    BoundUnaryOperatorKind.LogicalNegation => !(bool)operand,
+                    _ => throw new Exception($"Unexpected unary operator {unary.OperatorKind}")
+                };
             }
 
             if (node is BoundBinaryExpression binary)
             {
-                var left = (int)EvaluateExpression(binary.Left);
-                var right = (int)EvaluateExpression(binary.Right);
+                var left = EvaluateExpression(binary.Left);
+                var right = EvaluateExpression(binary.Right);
                 switch (binary.OperatorKind)
                 {
                     case BoundBinaryOperatorKind.Addition:
-                        return left + right;
+                        return (int)left + (int)right;
                     case BoundBinaryOperatorKind.Subtraction:
-                        return left - right;
+                        return (int)left - (int)right;
                     case BoundBinaryOperatorKind.Multiplication:
-                        return left * right;
+                        return (int)left * (int)right;
                     case BoundBinaryOperatorKind.Division:
-                        return left / right;
+                        return (int)left / (int)right;
+                    case BoundBinaryOperatorKind.LogicalAnd:
+                        return (bool)left && (bool)right;
+                    case BoundBinaryOperatorKind.LogicalOr:
+                        return (bool)left || (bool)right;
                     default:
                         throw new Exception($"Unexpected binary operator {binary.OperatorKind}");
                 }
