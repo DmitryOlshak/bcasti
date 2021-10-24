@@ -10,7 +10,7 @@ namespace Bcasti.CodeAnalysis.Syntax
         public object Value { get; }
         public override SyntaxKind Kind { get; }
 
-        public SyntaxToken(SyntaxKind kind, int position, string text, object value)
+        public SyntaxToken(SyntaxKind kind, int position, string text, object value = null)
         {
             Kind = kind;
             Position = position;

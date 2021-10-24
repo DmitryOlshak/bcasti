@@ -21,7 +21,7 @@ namespace Bcasti.CodeAnalysis.Syntax
         public SyntaxToken NextToken()
         {
             if (_position >= _text.Length)
-                return new SyntaxToken(SyntaxKind.EndOfFileToken, _position, "\0", null);
+                return new SyntaxToken(SyntaxKind.EndOfFileToken, _position, "\0");
             
             if (char.IsDigit(Current))
             {
@@ -44,7 +44,7 @@ namespace Bcasti.CodeAnalysis.Syntax
                     Next();
                 var length = _position - start;
                 var text = _text.Substring(start, length);
-                return new SyntaxToken(SyntaxKind.WhiteSpaceToken, start, text, null);
+                return new SyntaxToken(SyntaxKind.WhiteSpaceToken, start, text);
             }
 
             if (char.IsLetter(Current))
@@ -55,38 +55,37 @@ namespace Bcasti.CodeAnalysis.Syntax
                 var length = _position - start;
                 var text = _text.Substring(start, length);
                 var syntaxKind = SyntaxFacts.GetKeywordKind(text);
-                return new SyntaxToken(syntaxKind, start, text, null);
+                return new SyntaxToken(syntaxKind, start, text);
             }
 
-            if (Current == '+')
-                return new SyntaxToken(SyntaxKind.PlusToken, _position++, "+", null);
-            
-            if (Current == '-')
-                return new SyntaxToken(SyntaxKind.MinusToken, _position++, "-", null);
-            
-            if (Current == '*')
-                return new SyntaxToken(SyntaxKind.StarToken, _position++, "*", null);
-            
-            if (Current == '/')
-                return new SyntaxToken(SyntaxKind.SlashToken, _position++, "/", null);
-            
-            if (Current == '(')
-                return new SyntaxToken(SyntaxKind.OpenParenthesisToken, _position++, "(", null);
-            
-            if (Current == ')') 
-                return new SyntaxToken(SyntaxKind.CloseParenthesisToken, _position++, ")", null);
-
-            if (Current == '!')
-                return new SyntaxToken(SyntaxKind.BangToken, _position++, "!", null);
-
-            if (Current == '&' && Lookahead == '&')
-                return new SyntaxToken(SyntaxKind.AmpersandAmpersandToken, _position += 2, "&&", null);
-            
-            if (Current == '|' && Lookahead == '|')
-                return new SyntaxToken(SyntaxKind.PipePipeToken, _position += 2, "||", null);
-
-            _diagnostics.Add($"ERROR: bad character input: {Current}");
-            return new SyntaxToken(SyntaxKind.BadToken, _position++, _text.Substring(_position - 1, 1), null);
+            switch (Current)
+            {
+                case '+':
+                    return new SyntaxToken(SyntaxKind.PlusToken, _position++, "+");
+                case '-':
+                    return new SyntaxToken(SyntaxKind.MinusToken, _position++, "-");
+                case '*':
+                    return new SyntaxToken(SyntaxKind.StarToken, _position++, "*");
+                case '/':
+                    return new SyntaxToken(SyntaxKind.SlashToken, _position++, "/");
+                case '(':
+                    return new SyntaxToken(SyntaxKind.OpenParenthesisToken, _position++, "(");
+                case ')':
+                    return new SyntaxToken(SyntaxKind.CloseParenthesisToken, _position++, ")");
+                case '&' when Lookahead == '&':
+                    return new SyntaxToken(SyntaxKind.AmpersandAmpersandToken, _position += 2, "&&");
+                case '|' when Lookahead == '|':
+                    return new SyntaxToken(SyntaxKind.PipePipeToken, _position += 2, "||");
+                case '=' when Lookahead == '=':
+                    return new SyntaxToken(SyntaxKind.EqualsEqualsToken, _position += 2, "==");
+                case '!':
+                    if (Lookahead == '=')
+                        return new SyntaxToken(SyntaxKind.BangEqualsToken, _position += 2, "!=");
+                    return new SyntaxToken(SyntaxKind.BangToken, _position++, "!");
+                default:
+                    _diagnostics.Add($"ERROR: bad character input: {Current}");
+                    return new SyntaxToken(SyntaxKind.BadToken, _position++, _text.Substring(_position - 1, 1), null);
+            }
         }
 
         private void Next() => _position++;
