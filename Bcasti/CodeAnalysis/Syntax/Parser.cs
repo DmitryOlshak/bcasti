@@ -5,7 +5,7 @@ namespace Bcasti.CodeAnalysis.Syntax
     internal sealed class Parser
     {
         private readonly SyntaxToken[] _tokens;
-        private readonly List<string> _diagnostics = new List<string>();
+        private readonly DiagnosticCollection _diagnostics = new DiagnosticCollection();
         private int _position;
         public Parser(string text)
         {
@@ -25,7 +25,7 @@ namespace Bcasti.CodeAnalysis.Syntax
             _diagnostics.AddRange(lexer.Diagnostics);
         }
 
-        public IEnumerable<string> Diagnostics => _diagnostics;
+        public IEnumerable<Diagnostic> Diagnostics => _diagnostics;
         private SyntaxToken Current => Peek(0);
 
         public SyntaxTree Parse()
@@ -104,7 +104,7 @@ namespace Bcasti.CodeAnalysis.Syntax
             if (Current.Kind == kind)
                 return NextToken();
 
-            _diagnostics.Add($"ERROR: unexpected token <{Current.Kind}>, expected <{kind}>");
+            _diagnostics.ReportUnexpectedToken(Current.Span, Current.Kind, kind);
             return new SyntaxToken(kind, Current.Position, null, null);
         }
     }

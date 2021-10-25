@@ -6,14 +6,14 @@ namespace Bcasti.CodeAnalysis.Syntax
     {
         private readonly string _text;
         private int _position;
-        private readonly List<string> _diagnostics = new List<string>();
+        private readonly DiagnosticCollection _diagnostics = new DiagnosticCollection();
 
         public Lexer(string text)
         {
             _text = text;
         }
 
-        public IEnumerable<string> Diagnostics => _diagnostics;
+        public IEnumerable<Diagnostic> Diagnostics => _diagnostics;
 
         private char Current => Peek(0);
         private char Lookahead => Peek(1);
@@ -32,7 +32,7 @@ namespace Bcasti.CodeAnalysis.Syntax
                 var text = _text.Substring(start, length);
                 if (!int.TryParse(text, out var value))
                 {
-                    _diagnostics.Add($"ERROR: the number {text} isn't valid Int");
+                    _diagnostics.ReportInvalidNumber(new TextSpan(start, length), text, typeof(int));
                 }
                 return new SyntaxToken(SyntaxKind.NumberToken, start, text, value);
             }
@@ -61,34 +61,39 @@ namespace Bcasti.CodeAnalysis.Syntax
             switch (Current)
             {
                 case '+':
-                    return new SyntaxToken(SyntaxKind.PlusToken, _position++, "+");
+                    return new SyntaxToken(SyntaxKind.PlusToken, Next(), "+");
                 case '-':
-                    return new SyntaxToken(SyntaxKind.MinusToken, _position++, "-");
+                    return new SyntaxToken(SyntaxKind.MinusToken, Next(), "-");
                 case '*':
-                    return new SyntaxToken(SyntaxKind.StarToken, _position++, "*");
+                    return new SyntaxToken(SyntaxKind.StarToken, Next(), "*");
                 case '/':
-                    return new SyntaxToken(SyntaxKind.SlashToken, _position++, "/");
+                    return new SyntaxToken(SyntaxKind.SlashToken, Next(), "/");
                 case '(':
-                    return new SyntaxToken(SyntaxKind.OpenParenthesisToken, _position++, "(");
+                    return new SyntaxToken(SyntaxKind.OpenParenthesisToken, Next(), "(");
                 case ')':
-                    return new SyntaxToken(SyntaxKind.CloseParenthesisToken, _position++, ")");
+                    return new SyntaxToken(SyntaxKind.CloseParenthesisToken, Next(), ")");
                 case '&' when Lookahead == '&':
-                    return new SyntaxToken(SyntaxKind.AmpersandAmpersandToken, _position += 2, "&&");
+                    return new SyntaxToken(SyntaxKind.AmpersandAmpersandToken, Next(2), "&&");
                 case '|' when Lookahead == '|':
-                    return new SyntaxToken(SyntaxKind.PipePipeToken, _position += 2, "||");
+                    return new SyntaxToken(SyntaxKind.PipePipeToken, Next(2), "||");
                 case '=' when Lookahead == '=':
-                    return new SyntaxToken(SyntaxKind.EqualsEqualsToken, _position += 2, "==");
+                    return new SyntaxToken(SyntaxKind.EqualsEqualsToken, Next(2), "==");
                 case '!':
                     if (Lookahead == '=')
-                        return new SyntaxToken(SyntaxKind.BangEqualsToken, _position += 2, "!=");
-                    return new SyntaxToken(SyntaxKind.BangToken, _position++, "!");
+                        return new SyntaxToken(SyntaxKind.BangEqualsToken, Next(2), "!=");
+                    return new SyntaxToken(SyntaxKind.BangToken, Next(), "!");
                 default:
-                    _diagnostics.Add($"ERROR: bad character input: {Current}");
-                    return new SyntaxToken(SyntaxKind.BadToken, _position++, _text.Substring(_position - 1, 1), null);
+                    _diagnostics.ReportBadCharacter(_position, Current);
+                    return new SyntaxToken(SyntaxKind.BadToken, Next(), _text.Substring(_position - 1, 1), null);
             }
         }
 
-        private void Next() => _position++;
+        private int Next(int shift = 1)
+        {
+            var position = _position;
+            _position += shift;
+            return position;
+        }
 
         private char Peek(int offset)
         {

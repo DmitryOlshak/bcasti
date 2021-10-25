@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Linq;
 using Bcasti.CodeAnalysis;
-using Bcasti.CodeAnalysis.Binding;
 using Bcasti.CodeAnalysis.Syntax;
 
 namespace Bcasti
@@ -26,33 +25,48 @@ namespace Bcasti
                 }
                 
                 var syntaxTree = SyntaxTree.Parse(line);
-                var binder = new Binder();
-                var boundExpression = binder.Bind(syntaxTree.Root);
-                var diagnostics = syntaxTree.Diagnostics.Concat(binder.Diagnostics).ToArray();
+                var compilation = new Compilation(syntaxTree);
+                var result = compilation.Evaluate();
 
                 if (showTree)
                 {
                     Console.ForegroundColor = ConsoleColor.DarkGray;
-                    PrettyPrint(syntaxTree.Root);
+                    PrintNode(syntaxTree.Root);
                     Console.ResetColor();
                 }
                 
-                if (!diagnostics.Any())
+                if (!result.Diagnostics.Any())
                 {
-                    var evaluator = new Evaluator(boundExpression);
-                    Console.WriteLine(evaluator.Evaluate());
+                    Console.WriteLine(result.Value);
                 }
                 else
                 {
                     Console.ForegroundColor = ConsoleColor.DarkRed;
-                    foreach (var diagnostic in diagnostics)
+                    foreach (var diagnostic in result.Diagnostics)
+                    {
+                        Console.WriteLine();
                         Console.WriteLine(diagnostic);
+
+                        Console.ResetColor();
+                        var prefix = line.Substring(0, diagnostic.Span.Start);
+                        Console.Write("    " + prefix);
+                        
+                        Console.ForegroundColor = ConsoleColor.DarkRed;
+                        var error = line.Substring(diagnostic.Span.Start, diagnostic.Span.Length);
+                        Console.Write(error);
+                        
+                        Console.ResetColor();
+                        var postfix = line.Substring(diagnostic.Span.End);
+                        Console.WriteLine(postfix);
+                    }
+                    
+                    Console.WriteLine();
                     Console.ResetColor();
                 }
             }
         }
 
-        static void PrettyPrint(SyntaxNode node, string indent = "", bool isLast = true)
+        static void PrintNode(SyntaxNode node, string indent = "", bool isLast = true)
         {
             var nodeChar = isLast ? "└── " : "├── ";
 
@@ -74,7 +88,7 @@ namespace Bcasti
                 var completed = !enumerator.MoveNext();
                 
                 if (current != null)
-                    PrettyPrint(current, indent, isLast: completed);
+                    PrintNode(current, indent, isLast: completed);
 
                 current = enumerator.Current;
                 

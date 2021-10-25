@@ -6,9 +6,9 @@ namespace Bcasti.CodeAnalysis.Binding
 {
     internal sealed class Binder
     {
-        private readonly List<string> _diagnostics = new List<string>();
+        private readonly DiagnosticCollection _diagnostics = new DiagnosticCollection();
 
-        public IEnumerable<string> Diagnostics => _diagnostics;
+        public IEnumerable<Diagnostic> Diagnostics => _diagnostics;
 
         public BoundExpression Bind(ExpressionSyntax syntax)
         {
@@ -40,7 +40,7 @@ namespace Bcasti.CodeAnalysis.Binding
             
             if (op == null)
             {
-                _diagnostics.Add($"Binary operator '{syntax.OperatorToken.Text}' is not define for types {left.Type} and {right.Type}");
+                _diagnostics.ReportUndefinedBinaryOperator(syntax.OperatorToken.Span, syntax.OperatorToken.Text, left.Type, right.Type);
                 return left;
             }
 
@@ -54,7 +54,7 @@ namespace Bcasti.CodeAnalysis.Binding
             
             if (op == null)
             {
-                _diagnostics.Add($"Unary operator '{syntax.OperatorToken.Text}' is not define for type {operand.Type}");
+                _diagnostics.ReportUndefinedUnaryOperator(syntax.OperatorToken.Span, syntax.OperatorToken.Text, operand.Type);
                 return operand;
             }
             
