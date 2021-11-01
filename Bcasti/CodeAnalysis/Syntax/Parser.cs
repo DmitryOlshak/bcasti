@@ -27,6 +27,7 @@ namespace Bcasti.CodeAnalysis.Syntax
 
         public IEnumerable<Diagnostic> Diagnostics => _diagnostics;
         private SyntaxToken Current => Peek(0);
+        private SyntaxToken Lookahead => Peek(1);
 
         public SyntaxTree Parse()
         {
@@ -35,14 +36,32 @@ namespace Bcasti.CodeAnalysis.Syntax
             return new SyntaxTree(_diagnostics, expression, endOfFileToken);
         }
 
-        private ExpressionSyntax ParseExpression(int parentPrecedence = 0)
+        private ExpressionSyntax ParseExpression()
+        {
+            return ParseAssignmentExpression();
+        }
+        
+        private ExpressionSyntax ParseAssignmentExpression()
+        {
+            if (Current.Kind == SyntaxKind.IdentifierToken && Lookahead.Kind == SyntaxKind.EqualsToken)
+            {
+                var identifierToken = NextToken();
+                var equalsToken = NextToken();
+                var expression = ParseAssignmentExpression();
+                return new AssignmentExpressionSyntax(identifierToken, equalsToken, expression);
+            }
+
+            return ParseBinaryExpression();
+        }
+        
+        private ExpressionSyntax ParseBinaryExpression(int parentPrecedence = 0)
         {
             ExpressionSyntax left;
             var unaryOperatorPrecedence = SyntaxFacts.GetUnaryOperatorPrecedence(Current.Kind);
             if (unaryOperatorPrecedence != 0 && unaryOperatorPrecedence > parentPrecedence)
             {
                 var operatorToken = NextToken();
-                var operand = ParseExpression();
+                var operand = ParseBinaryExpression();
                 left = new UnaryExpressionSyntax(operatorToken, operand);
             }
             else
@@ -57,7 +76,7 @@ namespace Bcasti.CodeAnalysis.Syntax
                     break;
 
                 var operatorToken = NextToken();
-                var right = ParseExpression(precedence);
+                var right = ParseBinaryExpression(precedence);
                 left = new BinaryExpressionSyntax(left, operatorToken, right);
             }
 
@@ -79,6 +98,12 @@ namespace Bcasti.CodeAnalysis.Syntax
                 var booleanToken = NextToken();
                 var value = booleanToken.Kind == SyntaxKind.TrueKeyword;
                 return new LiteralExpressionSyntax(booleanToken, value);
+            }
+
+            if (Current.Kind == SyntaxKind.IdentifierToken)
+            {
+                var identifierToken = NextToken();
+                return new NameExpressionSyntax(identifierToken);
             }
             
             var numberToken = Match(SyntaxKind.NumberToken);

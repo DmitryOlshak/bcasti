@@ -23,6 +23,9 @@
         AmpersandAmpersandToken,
         PipePipeToken,
         BangEqualsToken,
-        EqualsEqualsToken
+        EqualsEqualsToken,
+        NameExpression,
+        AssignmentExpression,
+        EqualsToken
     }
 }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Bcasti.CodeAnalysis;
 using Bcasti.CodeAnalysis.Syntax;
@@ -9,6 +10,7 @@ namespace Bcasti
     {
         private static void Main()
         {
+            var variables = new Dictionary<string, object>();
             var showTree = false;
             while (true)
             {
@@ -26,7 +28,7 @@ namespace Bcasti
                 
                 var syntaxTree = SyntaxTree.Parse(line);
                 var compilation = new Compilation(syntaxTree);
-                var result = compilation.Evaluate();
+                var result = compilation.Evaluate(variables);
 
                 if (showTree)
                 {

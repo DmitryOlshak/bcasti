@@ -76,8 +76,10 @@ namespace Bcasti.CodeAnalysis.Syntax
                     return new SyntaxToken(SyntaxKind.AmpersandAmpersandToken, Next(2), "&&");
                 case '|' when Lookahead == '|':
                     return new SyntaxToken(SyntaxKind.PipePipeToken, Next(2), "||");
-                case '=' when Lookahead == '=':
-                    return new SyntaxToken(SyntaxKind.EqualsEqualsToken, Next(2), "==");
+                case '=':
+                    if (Lookahead == '=')
+                        return new SyntaxToken(SyntaxKind.EqualsEqualsToken, Next(2), "==");
+                    return new SyntaxToken(SyntaxKind.EqualsToken, Next(), "=");
                 case '!':
                     if (Lookahead == '=')
                         return new SyntaxToken(SyntaxKind.BangEqualsToken, Next(2), "!=");

@@ -6,7 +6,13 @@ namespace Bcasti.CodeAnalysis.Binding
 {
     internal sealed class Binder
     {
+        private readonly Dictionary<string, object> _variables;
         private readonly DiagnosticCollection _diagnostics = new DiagnosticCollection();
+
+        public Binder(Dictionary<string,object> variables)
+        {
+            _variables = variables;
+        }
 
         public IEnumerable<Diagnostic> Diagnostics => _diagnostics;
 
@@ -22,9 +28,33 @@ namespace Bcasti.CodeAnalysis.Binding
                     return BindUnaryExpression((UnaryExpressionSyntax)syntax);
                 case SyntaxKind.ParenthesizedExpression:
                     return Bind(((ParenthesizedExpressionSyntax)syntax).Expression);
+                case SyntaxKind.NameExpression:
+                    return BindNameExpression((NameExpressionSyntax)syntax);
+                case SyntaxKind.AssignmentExpression:
+                    return BindAssignmentExpression((AssignmentExpressionSyntax)syntax);
                 default:
                     throw new Exception($"Unexpected syntax {syntax.Kind}");
             }
+        }
+
+        private BoundExpression BindAssignmentExpression(AssignmentExpressionSyntax syntax)
+        {
+            var name = syntax.IdentifierToken.Text;
+            var expression = Bind(syntax.Expression);
+            return new BoundAssignmentExpression(name, expression);
+        }
+
+        private BoundExpression BindNameExpression(NameExpressionSyntax syntax)
+        {
+            var name = syntax.IdentifierToken.Text;
+            if (!_variables.TryGetValue(name, out var value))
+            {
+                _diagnostics.ReportUndefinedIdentifier(syntax.IdentifierToken.Span, name);
+                return new BoundLiteralExpression(0);
+            }
+
+            var type = typeof(int);
+            return new BoundVariableExpression(name, type);
         }
 
         private BoundExpression BindLiteralExpression(LiteralExpressionSyntax syntax)

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Bcasti.CodeAnalysis.Binding;
 
 namespace Bcasti.CodeAnalysis
@@ -6,10 +7,12 @@ namespace Bcasti.CodeAnalysis
     internal sealed class Evaluator
     {
         private readonly BoundExpression _root;
+        private readonly Dictionary<string, object> _variables;
 
-        public Evaluator(BoundExpression root)
+        public Evaluator(BoundExpression root, Dictionary<string, object> variables)
         {
             _root = root;
+            _variables = variables;
         }
 
         public object Evaluate()
@@ -22,6 +25,16 @@ namespace Bcasti.CodeAnalysis
             if (node is BoundLiteralExpression literal)
                 return literal.Value;
 
+            if (node is BoundVariableExpression variable)
+                return _variables[variable.Name];
+
+            if (node is BoundAssignmentExpression assignment)
+            {
+                var value = EvaluateExpression(assignment.Expression);
+                _variables[assignment.Name] = value;
+                return value;
+            }
+            
             if (node is BoundUnaryExpression unary)
             {
                 var operand = EvaluateExpression(unary.Operand);

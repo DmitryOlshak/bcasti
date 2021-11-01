@@ -43,9 +43,16 @@ namespace Bcasti.CodeAnalysis
             Report(span, $"Unary operator '{text}' is not define for type {operandType}");
         }
         
+        public void ReportUndefinedIdentifier(TextSpan span, string name)
+        {
+            Report(span, $"Variable '{name}' doesn't exist");
+        }
+        
         private void Report(TextSpan span, string message)
         {
             _diagnostics.Add(new Diagnostic(span, message));
         }
+
+        
     }
 }
