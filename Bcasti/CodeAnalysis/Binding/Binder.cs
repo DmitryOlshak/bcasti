@@ -41,6 +41,19 @@ namespace Bcasti.CodeAnalysis.Binding
         {
             var name = syntax.IdentifierToken.Text;
             var expression = Bind(syntax.Expression);
+
+            object defaultValue = null;
+            
+            if (expression.Type == typeof(int))
+                defaultValue = 0;
+            else if (expression.Type == typeof(bool))
+                defaultValue = false;
+
+            if (defaultValue == null)
+                throw new Exception($"Unsupported variable type: {expression.Type}");
+
+            _variables[name] = defaultValue;
+            
             return new BoundAssignmentExpression(name, expression);
         }
 
@@ -53,7 +66,7 @@ namespace Bcasti.CodeAnalysis.Binding
                 return new BoundLiteralExpression(0);
             }
 
-            var type = typeof(int);
+            var type = value.GetType();
             return new BoundVariableExpression(name, type);
         }
 
