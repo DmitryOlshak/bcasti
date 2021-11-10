@@ -4,14 +4,13 @@ namespace Bcasti.CodeAnalysis.Binding
 {
     internal sealed class BoundVariableExpression : BoundExpression
     {
-        public string Name { get; }
+        public VariableSymbol Variable { get; }
         public override BoundNodeKind Kind => BoundNodeKind.VariableExpression;
-        public override Type Type { get; }
+        public override Type Type => Variable.Type;
         
-        public BoundVariableExpression(string name, Type type)
+        public BoundVariableExpression(VariableSymbol variable)
         {
-            Name = name;
-            Type = type;
+            Variable = variable;
         }
     }
 }

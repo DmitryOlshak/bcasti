@@ -15,7 +15,7 @@ namespace Bcasti.CodeAnalysis
             SyntaxTree = syntaxTree;
         }
 
-        public EvaluationResult Evaluate(Dictionary<string, object> variables)
+        public EvaluationResult Evaluate(Dictionary<VariableSymbol, object> variables)
         {
             var binder = new Binder(variables);
             var boundExpression = binder.Bind(SyntaxTree.Root);

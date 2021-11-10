@@ -7,9 +7,9 @@ namespace Bcasti.CodeAnalysis
     internal sealed class Evaluator
     {
         private readonly BoundExpression _root;
-        private readonly Dictionary<string, object> _variables;
+        private readonly Dictionary<VariableSymbol, object> _variables;
 
-        public Evaluator(BoundExpression root, Dictionary<string, object> variables)
+        public Evaluator(BoundExpression root, Dictionary<VariableSymbol, object> variables)
         {
             _root = root;
             _variables = variables;
@@ -26,12 +26,12 @@ namespace Bcasti.CodeAnalysis
                 return literal.Value;
 
             if (node is BoundVariableExpression variable)
-                return _variables[variable.Name];
+                return _variables[variable.Variable];
 
             if (node is BoundAssignmentExpression assignment)
             {
                 var value = EvaluateExpression(assignment.Expression);
-                _variables[assignment.Name] = value;
+                _variables[assignment.Variable] = value;
                 return value;
             }
             

@@ -1,15 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Bcasti.CodeAnalysis.Syntax;
 
 namespace Bcasti.CodeAnalysis.Binding
 {
     internal sealed class Binder
     {
-        private readonly Dictionary<string, object> _variables;
+        private readonly Dictionary<VariableSymbol, object> _variables;
         private readonly DiagnosticCollection _diagnostics = new DiagnosticCollection();
 
-        public Binder(Dictionary<string,object> variables)
+        public Binder(Dictionary<VariableSymbol,object> variables)
         {
             _variables = variables;
         }
@@ -42,32 +43,28 @@ namespace Bcasti.CodeAnalysis.Binding
             var name = syntax.IdentifierToken.Text;
             var expression = Bind(syntax.Expression);
 
-            object defaultValue = null;
-            
-            if (expression.Type == typeof(int))
-                defaultValue = 0;
-            else if (expression.Type == typeof(bool))
-                defaultValue = false;
+            var existingVariable = _variables.Keys.FirstOrDefault(var => var.Name == name);
+            if (existingVariable != null)
+                _variables.Remove(existingVariable);
 
-            if (defaultValue == null)
-                throw new Exception($"Unsupported variable type: {expression.Type}");
-
-            _variables[name] = defaultValue;
+            var variable = new VariableSymbol(name, expression.Type);
+            _variables[variable] = null;
             
-            return new BoundAssignmentExpression(name, expression);
+            return new BoundAssignmentExpression(variable, expression);
         }
 
         private BoundExpression BindNameExpression(NameExpressionSyntax syntax)
         {
             var name = syntax.IdentifierToken.Text;
-            if (!_variables.TryGetValue(name, out var value))
+            var variable = _variables.Keys.FirstOrDefault(var => var.Name == name);
+            
+            if (variable is null)
             {
                 _diagnostics.ReportUndefinedIdentifier(syntax.IdentifierToken.Span, name);
                 return new BoundLiteralExpression(0);
             }
 
-            var type = value.GetType();
-            return new BoundVariableExpression(name, type);
+            return new BoundVariableExpression(variable);
         }
 
         private BoundExpression BindLiteralExpression(LiteralExpressionSyntax syntax)
