@@ -1,4 +1,8 @@
-﻿namespace Bcasti.CodeAnalysis.Syntax
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace Bcasti.CodeAnalysis.Syntax
 {
     public static class SyntaxFacts 
     {
@@ -35,6 +39,18 @@
                 default:
                     return 0;
             }
+        }
+
+        public static IEnumerable<SyntaxKind> GetBinaryOperatorKinds()
+        {
+            var kinds = Enum.GetValues(typeof(SyntaxKind)) as SyntaxKind[];
+            return kinds!.Where(kind => GetBinaryOperatorPrecedence(kind) > 0);
+        }
+        
+        public static IEnumerable<SyntaxKind> GetUnaryOperatorKinds()
+        {
+            var kinds = Enum.GetValues(typeof(SyntaxKind)) as SyntaxKind[];
+            return kinds!.Where(kind => GetUnaryOperatorPrecedence(kind) > 0);
         }
 
         public static SyntaxKind GetKeywordKind(string keyword)
